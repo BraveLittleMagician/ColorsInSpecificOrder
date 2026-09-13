@@ -5,8 +5,8 @@ public class Program
 {
     public static void Main()
     {
-        const int teamCount = 16;
-        const int subteamCount = 16;
+        const int teamCount = 6;
+        const int subteamCount = 6;
         const int cellSize = 100;
 
         int width = teamCount * cellSize;
@@ -100,10 +100,16 @@ public class Program
             double v = subteamCount <= 1 ? 0.5 : index.IndexOfPlayerOnSide / (double)(subteamCount - 1);
 
             double d = (u + v) * 0.5;
-
             double hueOffset = 60.0;
-            double teamHue = hueOffset - index.IndexOfSide * 360.0 / Math.Max(teamCount, 1);
+
+            double step = 360.0 / Math.Max(teamCount, 1);
+            int half = teamCount / 2;
+
+            double delta = index.IndexOfSide < half ? -index.IndexOfSide * step : (index.IndexOfSide - half + 1) * step;
+
+            double teamHue = hueOffset + delta;
             double lightness = 1 - d;
+
             return (teamHue, 1, lightness);
         }
     }
