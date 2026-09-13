@@ -3,18 +3,79 @@ using SixLabors.ImageSharp.PixelFormats;
 
 public class Program
 {
+    private const int _maxCells = 4096;
+
     public static void Main()
     {
-        const int teamCount = 6;
-        const int subteamCount = 6;
+        while (true)
+        {
+            Console.WriteLine("=== Генератор палитры ===");
+            Console.WriteLine("Для выхода введите 'exit' или 'q'.");
+            Console.WriteLine($"Максимум клеток: {_maxCells} (количество сторон * количество разделов).");
+            Console.WriteLine();
+
+            int? teamCount = ReadPositiveInt("Введите количество сторон: ");
+            if (teamCount is null) break;
+
+            int? subteamCount = ReadPositiveInt("Введите количество разделов: ");
+            if (subteamCount is null) break;
+
+            if (teamCount.Value * subteamCount.Value > _maxCells)
+            {
+                Console.WriteLine(
+                    $"Слишком много клеток: {teamCount.Value} * {subteamCount.Value} = " +
+                    $"{teamCount.Value * subteamCount.Value}, а максимум {_maxCells}. Попробуйте снова.\n");
+                continue;
+            }
+
+            try
+            {
+                GenerateImage(teamCount.Value, subteamCount.Value);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при генерации: {ex.Message}\n");
+            }
+
+            Console.WriteLine();
+        }
+
+        Console.WriteLine("Выход. Нажмите любую клавишу...");
+        Console.ReadKey();
+    }
+
+    private static int? ReadPositiveInt(string prompt)
+    {
+        while (true)
+        {
+            Console.Write(prompt);
+            string? s = Console.ReadLine();
+
+            if (!string.IsNullOrWhiteSpace(s) &&
+                (s.Trim().Equals("exit", StringComparison.OrdinalIgnoreCase) ||
+                 s.Trim().Equals("q", StringComparison.OrdinalIgnoreCase)))
+                return null;
+
+            if (!string.IsNullOrWhiteSpace(s) &&
+                int.TryParse(s.Trim(), out int value) &&
+                value > 0)
+                return value;
+
+            Console.WriteLine("Некорректное значение. Ожидалось положительное целое число. Попробуйте снова.\n");
+        }
+    }
+
+    private static void GenerateImage(int teamCount, int subteamCount)
+    {
         const int cellSize = 100;
 
-        int width = teamCount * cellSize;
-        int height = subteamCount * cellSize;
+        int height = teamCount * cellSize;
+        int width = subteamCount * cellSize;
 
         using var image = new Image<Rgba32>(width, height);
 
-        Console.WriteLine($"{nameof(teamCount)}: {teamCount};\n{nameof(subteamCount)}: {subteamCount};");
+        Console.WriteLine($"{nameof(teamCount)}: {teamCount};");
+        Console.WriteLine($"{nameof(subteamCount)}: {subteamCount};");
 
         for (int team = 0; team < teamCount; team++)
         {
@@ -29,17 +90,16 @@ public class Program
                 for (int x = 0; x < cellSize; x++)
                 {
                     for (int y = 0; y < cellSize; y++)
-                    {
                         image[y0 + y, x0 + x] = color;
-                        if (x == 0 && y == 0)
-                            Console.WriteLine($"[{x0 / cellSize}, {y0 / cellSize}] => ({color.R}, {color.G}, {color.B})");
-                    }
                 }
+
+                Console.WriteLine($"[{team}, {sub}] => ({color.R}, {color.G}, {color.B})");
             }
         }
 
         string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
-        string outputPath = Path.Combine(desktopPath, "output.png");
+        string fileName = $"output_{teamCount}x{subteamCount}_{DateTime.Now:yyyyMMdd_HHmmss}.png";
+        string outputPath = Path.Combine(desktopPath, fileName);
 
         image.SaveAsPng(outputPath);
 
@@ -66,6 +126,7 @@ public class Program
 
         return new Rgba32(r, g, b);
     }
+
     public readonly struct IndexOfPlayer : IEquatable<IndexOfPlayer>
     {
         public IndexOfPlayer(int indexOfSide, int indexOfPlayer)
@@ -83,7 +144,7 @@ public class Program
 
         public override bool Equals(object? obj) => obj is IndexOfPlayer other && Equals(other);
         public override int GetHashCode() => HashCode.Combine(IndexOfSide, IndexOfPlayerOnSide);
-        
+
         public static bool operator ==(IndexOfPlayer left, IndexOfPlayer right) => left.Equals(right);
         public static bool operator !=(IndexOfPlayer left, IndexOfPlayer right) => !(left == right);
     }
@@ -94,18 +155,21 @@ public class Program
             var (hue, saturation, lightness) = GetHSL(index, teamCount, subteamCount);
             return HslToRgba32(hue, saturation, lightness);
         }
+
         public static (double hue, double saturation, double lightness) GetHSL(IndexOfPlayer index, int teamCount, int subteamCount)
         {
             double u = teamCount <= 1 ? 0.5 : index.IndexOfSide / (double)(teamCount - 1);
             double v = subteamCount <= 1 ? 0.5 : index.IndexOfPlayerOnSide / (double)(subteamCount - 1);
 
             double d = (u + v) * 0.5;
-            double hueOffset = 60.0;
 
+            double hueOffset = 60.0;
             double step = 360.0 / Math.Max(teamCount, 1);
             int half = teamCount / 2;
 
-            double delta = index.IndexOfSide < half ? -index.IndexOfSide * step : (index.IndexOfSide - half + 1) * step;
+            double delta = index.IndexOfSide < half
+                ? -index.IndexOfSide * step
+                : (index.IndexOfSide - half + 1) * step;
 
             double teamHue = hueOffset + delta;
             double lightness = 1 - d;
