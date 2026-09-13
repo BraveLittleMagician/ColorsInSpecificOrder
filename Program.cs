@@ -158,23 +158,38 @@ public class Program
 
         public static (double hue, double saturation, double lightness) GetHSL(IndexOfPlayer index, int teamCount, int subteamCount)
         {
-            double u = teamCount <= 1 ? 0.5 : index.IndexOfSide / (double)(teamCount - 1);
-            double v = subteamCount <= 1 ? 0.5 : index.IndexOfPlayerOnSide / (double)(subteamCount - 1);
-
-            double d = (u + v) * 0.5;
+            int half = teamCount / 2;
 
             double hueOffset = 60.0;
             double step = 360.0 / Math.Max(teamCount, 1);
-            int half = teamCount / 2;
 
-            double delta = index.IndexOfSide < half
-                ? -index.IndexOfSide * step
-                : (index.IndexOfSide - half + 1) * step;
+            double v = subteamCount <= 1 ? 0.5 : index.IndexOfPlayerOnSide / (double)(subteamCount - 1);
 
-            double teamHue = hueOffset + delta;
-            double lightness = 1 - d;
+            double hue;
+            double u;
+            double lightness;
 
-            return (teamHue, 1, lightness);
+            if (index.IndexOfSide < half)
+            {
+                u = half <= 1 ? 0.5 : index.IndexOfSide / (double)(half - 1);
+
+                hue = hueOffset - index.IndexOfSide * step;
+
+                lightness = 1.0 - (u + v) * 0.25;
+            }
+            else
+            {
+                int localIndex = index.IndexOfSide - half;
+                int localCount = teamCount - half;
+
+                u = localCount <= 1 ? 0.5 : localIndex / (double)(localCount - 1);
+
+                hue = hueOffset + (localIndex + 1) * step;
+
+                lightness = 0.5 - (u + v) * 0.25;
+            }
+
+            return (hue, 1, lightness);
         }
     }
 }
