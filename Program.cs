@@ -5,8 +5,8 @@ public class Program
 {
     public static void Main()
     {
-        const int teamCount = 2;
-        const int subteamCount = 1;
+        const int teamCount = 16;
+        const int subteamCount = 16;
         const int cellSize = 100;
 
         int width = teamCount * cellSize;
@@ -30,7 +30,7 @@ public class Program
                 {
                     for (int y = 0; y < cellSize; y++)
                     {
-                        image[x0 + x, y0 + y] = color;
+                        image[y0 + y, x0 + x] = color;
                         if (x == 0 && y == 0)
                             Console.WriteLine($"[{x0 / cellSize}, {y0 / cellSize}] => ({color.R}, {color.G}, {color.B})");
                     }
@@ -71,18 +71,18 @@ public class Program
         public IndexOfPlayer(int indexOfSide, int indexOfPlayer)
         {
             IndexOfSide = Math.Max(indexOfSide, 0);
-            IndexOnPlayerOnSide = Math.Max(indexOfPlayer, 0);
+            IndexOfPlayerOnSide = Math.Max(indexOfPlayer, 0);
         }
 
         public int IndexOfSide { get; }
-        public int IndexOnPlayerOnSide { get; }
+        public int IndexOfPlayerOnSide { get; }
 
-        public override string ToString() => $"{IndexOfSide}-{IndexOnPlayerOnSide}";
+        public override string ToString() => $"{IndexOfSide}-{IndexOfPlayerOnSide}";
 
-        public bool Equals(IndexOfPlayer other) => IndexOfSide == other.IndexOfSide && IndexOnPlayerOnSide == other.IndexOnPlayerOnSide;
+        public bool Equals(IndexOfPlayer other) => IndexOfSide == other.IndexOfSide && IndexOfPlayerOnSide == other.IndexOfPlayerOnSide;
 
         public override bool Equals(object? obj) => obj is IndexOfPlayer other && Equals(other);
-        public override int GetHashCode() => HashCode.Combine(IndexOfSide, IndexOnPlayerOnSide);
+        public override int GetHashCode() => HashCode.Combine(IndexOfSide, IndexOfPlayerOnSide);
         
         public static bool operator ==(IndexOfPlayer left, IndexOfPlayer right) => left.Equals(right);
         public static bool operator !=(IndexOfPlayer left, IndexOfPlayer right) => !(left == right);
@@ -96,15 +96,15 @@ public class Program
         }
         public static (double hue, double saturation, double lightness) GetHSL(IndexOfPlayer index, int teamCount, int subteamCount)
         {
-            double teamHue = index.IndexOfSide * 360.0 / Math.Max(teamCount, 1);
-            double t = subteamCount <= 1 ? 0.5 : index.IndexOnPlayerOnSide / (double)(subteamCount - 1);
+            double u = teamCount <= 1 ? 0.5 : index.IndexOfSide / (double)(teamCount - 1);
+            double v = subteamCount <= 1 ? 0.5 : index.IndexOfPlayerOnSide / (double)(subteamCount - 1);
 
-            if (index.IndexOfSide % 2 == 1) t = 1.0 - t;
+            double d = (u + v) * 0.5;
 
-            double hueShift = (t - 0.5) * 40.0;
-            double hue = teamHue + hueShift;
-            double lightness = 0.90 - t * 0.80;
-            return (hue, 1, lightness);
+            double hueOffset = 60.0;
+            double teamHue = hueOffset - index.IndexOfSide * 360.0 / Math.Max(teamCount, 1);
+            double lightness = 1 - d;
+            return (teamHue, 1, lightness);
         }
     }
 }
