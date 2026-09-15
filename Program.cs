@@ -156,16 +156,15 @@ public class Program
             return HslToRgba32(hue, saturation, lightness);
         }
 
-        public static (double hue, double saturation, double lightness) GetHSL(IndexOfPlayer index, int teamCount, int subteamCount)
+        public static (double hue, double saturation, double lightness) GetHSL(
+    IndexOfPlayer index, int teamCount, int subteamCount)
         {
             int half = teamCount / 2;
 
             double hueOffset = 60.0;
             double step = 360.0 / Math.Max(teamCount, 1);
 
-            double v = subteamCount <= 1
-                ? 0.5
-                : index.IndexOfPlayerOnSide / (double)(subteamCount - 1);
+            double v = subteamCount <= 1 ? 0.0 : index.IndexOfPlayerOnSide / (double)(subteamCount - 1);
 
             double hue;
             double u;
@@ -173,7 +172,7 @@ public class Program
 
             if (index.IndexOfSide < half)
             {
-                u = half <= 1 ? 0.5 : index.IndexOfSide / (double)(half - 1);
+                u = half <= 1 ? 0.0 : index.IndexOfSide / (double)(half - 1);
 
                 hue = hueOffset - index.IndexOfSide * step;
                 lightness = 1.0 - (u + v) * 0.25;
@@ -185,7 +184,7 @@ public class Program
 
                 int reversedLocalIndex = localCount - 1 - localIndex;
 
-                u = localCount <= 1 ? 0.5 : reversedLocalIndex / (double)(localCount - 1);
+                u = localCount <= 1 ? 1.0 : reversedLocalIndex / (double)(localCount - 1);
 
                 double vRev = 1.0 - v;
 
