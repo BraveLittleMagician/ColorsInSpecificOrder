@@ -163,7 +163,9 @@ public class Program
             double hueOffset = 60.0;
             double step = 360.0 / Math.Max(teamCount, 1);
 
-            double v = subteamCount <= 1 ? 0.5 : index.IndexOfPlayerOnSide / (double)(subteamCount - 1);
+            double v = subteamCount <= 1
+                ? 0.5
+                : index.IndexOfPlayerOnSide / (double)(subteamCount - 1);
 
             double hue;
             double u;
@@ -174,7 +176,6 @@ public class Program
                 u = half <= 1 ? 0.5 : index.IndexOfSide / (double)(half - 1);
 
                 hue = hueOffset - index.IndexOfSide * step;
-
                 lightness = 1.0 - (u + v) * 0.25;
             }
             else
@@ -182,11 +183,14 @@ public class Program
                 int localIndex = index.IndexOfSide - half;
                 int localCount = teamCount - half;
 
-                u = localCount <= 1 ? 0.5 : localIndex / (double)(localCount - 1);
+                int reversedLocalIndex = localCount - 1 - localIndex;
 
-                hue = hueOffset + (localIndex + 1) * step;
+                u = localCount <= 1 ? 0.5 : reversedLocalIndex / (double)(localCount - 1);
 
-                lightness = 0.5 - (u + v) * 0.25;
+                double vRev = 1.0 - v;
+
+                hue = 240.0 - localIndex * step;
+                lightness = 0.5 - (u + vRev) * 0.25;
             }
 
             return (hue, 1, lightness);
